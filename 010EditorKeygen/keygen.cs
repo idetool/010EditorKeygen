@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Text;
 
 namespace _010EditorKeygen
 {
-	internal class Keygen
+	internal static class Keygen
 	{
 		#region data
 		private static readonly uint[] Data= {
@@ -47,10 +48,17 @@ namespace _010EditorKeygen
 			tempNum -= num;
 			uint data0 = 0;
 			uint data2 = 0, data3 = 0;
-			foreach (var t in str)
+
+			var utf8=new UTF8Encoding(false);
+			var bytes = utf8.GetBytes(str);
+			foreach (var t in bytes)
 			{
 				tempNum %= 0x100;
-				uint c = char.ToUpper(t);
+				uint c = t;
+				if (c >= 'a' && c <= 'z')
+				{
+					c -= 'a' - 'A';
+				}
 				var data1 = Data[c];
 				data1 += data0;
 				data1 ^= Data[(c + 0xD) & 0xFF];
