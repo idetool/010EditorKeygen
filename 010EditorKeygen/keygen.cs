@@ -6,6 +6,7 @@ namespace _010EditorKeygen
 	internal static class Keygen
 	{
 		#region data
+		private static readonly UTF8Encoding UTF8 = new UTF8Encoding(false);
 		private static readonly uint[] Data= {
 		0x39cb44b8, 0x23754f67, 0x5f017211, 0x3ebb24da, 0x351707c6, 0x63f9774b, 0x17827288, 0x0fe74821,
 		0x5b5f670f, 0x48315ae8, 0x785b7769, 0x2b7a1547, 0x38d11292, 0x42a11b32, 0x35332244, 0x77437b60,
@@ -48,9 +49,8 @@ namespace _010EditorKeygen
 			tempNum -= num;
 			uint data0 = 0;
 			uint data2 = 0, data3 = 0;
-
-			var utf8=new UTF8Encoding(false);
-			var bytes = utf8.GetBytes(str);
+			
+			var bytes = UTF8.GetBytes(str);
 			foreach (var t in bytes)
 			{
 				tempNum %= 0x100;
@@ -74,20 +74,53 @@ namespace _010EditorKeygen
 			return data0;
 		}
 
+		private static bool CheckInput(string username, uint number)
+		{
+			if (number >= 1 && number <= 1000)
+			{
+				var textBytes = Encoding.UTF8.GetBytes(username);
+				if (textBytes.Length > 0 && textBytes.Length < 15)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		public static string MakeKey(string username, uint number)
 		{
+			if (!CheckInput(username, number))
+			{
+				return string.Empty;
+			}
+
+			var n = new short[7];
 			var t = (((number * 0xB) ^ 0x3421) - 0x4D30) ^ 0x7892;
-			var t1 = Convert.ToInt16(t / 0x100 % 0x100);
-			var t2 = Convert.ToInt16(t % 0x100);
 			var num = GetEncryStr(username, number);
-			var r4 = Convert.ToInt16(num / 0x1000000);
-			var r1 = Convert.ToInt16(num % 0x100);
-			var r2 = Convert.ToInt16(num % 0x10000 / 0x100);
-			var r3 = Convert.ToInt16(num / 0x10000 % 0x100);
-			t1 ^= r4;
-			t2 ^= r2;
-			var t0 = Convert.ToInt16(r3 ^ 0xE0);
-			return $@"{Convert.ToString(t0,16)}{Convert.ToString(t1, 16)}-{Convert.ToString(t2, 16)}9C-{Convert.ToString(r1,16)}{Convert.ToString(r2, 16)}-{Convert.ToString(r3, 16)}{Convert.ToString(r4,16)}".ToUpper();
+
+			n[1] = Convert.ToInt16(t / 0x100 % 0x100);
+			n[2] = Convert.ToInt16(t % 0x100);
+			n[3] = Convert.ToInt16(num % 0x100);
+			n[4] = Convert.ToInt16(num % 0x10000 / 0x100);
+			n[5] = Convert.ToInt16(num / 0x10000 % 0x100);
+			n[6] = Convert.ToInt16(num / 0x1000000);
+			n[1] ^= n[6];
+			n[2] ^= n[4];
+			n[0] = Convert.ToInt16(n[5] ^ 0xE0);
+
+			var k=new string[7];
+			for (var i = 0; i < 7; ++i)
+			{
+				if (n[i] < 0x10)
+				{
+					k[i] = $@"0{Convert.ToString(n[i], 16)}";
+				}
+				else
+				{
+					k[i] = $@"{Convert.ToString(n[i], 16)}";
+				}
+			}
+			return $@"{k[0]}{k[1]}-{k[2]}9C-{k[3]}{k[4]}-{k[5]}{k[6]}".ToUpper();
 		}
 	}
 }
